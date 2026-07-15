@@ -7,11 +7,12 @@ process.title = 'unitool-proxy';
 
 // Simple arg parsing (no external deps)
 const args = process.argv.slice(2);
-let port = 9000;
+// Render.com provides PORT env var - use it as default
+let port = parseInt(process.env.PORT, 10) || 9000;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '-p' || args[i] === '--port') {
-    port = parseInt(args[i + 1], 10) || 9000;
+    port = parseInt(args[i + 1], 10) || port;
     i++;
   } else if (args[i] === '--version') {
     console.log(pkg.version);
@@ -21,7 +22,7 @@ for (let i = 0; i < args.length; i++) {
     console.log('Usage: unitool-proxy -p [port]');
     console.log('');
     console.log('Options:');
-    console.log('  -p, --port     Port to listen on (default: 9000)');
+    console.log('  -p, --port     Port to listen on (default: PORT env or 9000)');
     console.log('  --version      Print version');
     console.log('  -h, --help     Show this help');
     process.exit(0);
