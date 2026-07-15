@@ -3,6 +3,9 @@ import { EventEmitter } from 'events';
 import { debug } from './logger';
 import { WebSocket as WS, WebSocketServer } from './ws-lite';
 import { IOSAdapter } from './adapters/iosAdapter';
+import { renderDashboard } from './webui';
+
+const pkg = require('../package.json');
 
 export class ProxyServer extends EventEmitter {
   private _serverPort: number;
@@ -82,19 +85,47 @@ export class ProxyServer extends EventEmitter {
 
   private handleHttp(req: http.IncomingMessage, res: http.ServerResponse) {
     const url = req.url || '/';
-    res.setHeader('Content-Type', 'application/json');
 
+    // Root → Serve HTML dashboard
     if (url === '/') {
       debug('server.http.endpoint/');
-      res.end(JSON.stringify({ msg: 'UniTool Proxy OK!' }));
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      const html = renderDashboard(
+        this._serverPort,
+        Math.floor(process.uptime()),
+        pkg.version || '1.0.0'
+      );
+      res.end(html);
+      return;
+    }
+
+    // Everything else → JSON
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (url === '/api/status' || url === '/health') {
+      res.end(JSON.stringify({
+        status: 'ok',
+        service: 'unitool-proxy',
+        version: pkg.version || '1.0.0',
+        uptime: Math.floor(process.uptime()),
+        port: this._serverPort,
+        timestamp: new Date().toISOString()
+      }));
     } else if (url === '/refresh') {
-      this._adapter.forceRefresh();
+      if (this._adapter) this._adapter.forceRefresh();
       this.emit('forceRefresh');
-      res.end(JSON.stringify({ status: 'ok' }));
+      res.end(JSON.stringify({ status: 'ok', msg: 'Refresh triggered' }));
     } else if (url === '/json' || url === '/json/list') {
       debug('server.http.endpoint' + url);
+      if (!this._adapter) {
+        res.end('[]');
+        return;
+      }
       this._adapter.getTargets().then((targets: any[]) => {
-        res.end(JSON.stringify(targets));
+        res.end(JSON.stringify(targets || []));
+      }).catch(() => {
+        res.end('[]');
       });
     } else if (url === '/json/version') {
       debug('server.http.endpoint/json/version');
@@ -109,7 +140,7 @@ export class ProxyServer extends EventEmitter {
       res.end(JSON.stringify({}));
     } else {
       res.statusCode = 404;
-      res.end(JSON.stringify({ error: 'Not found' }));
+      res.end(JSON.stringify({ error: 'Not found', path: url }));
     }
   }
 

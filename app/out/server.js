@@ -39,6 +39,8 @@ const events_1 = require("events");
 const logger_1 = require("./logger");
 const ws_lite_1 = require("./ws-lite");
 const iosAdapter_1 = require("./adapters/iosAdapter");
+const webui_1 = require("./webui");
+const pkg = require('../package.json');
 class ProxyServer extends events_1.EventEmitter {
     constructor() {
         super();
@@ -99,20 +101,43 @@ class ProxyServer extends events_1.EventEmitter {
     }
     handleHttp(req, res) {
         const url = req.url || '/';
-        res.setHeader('Content-Type', 'application/json');
+        // Root → Serve HTML dashboard
         if (url === '/') {
             (0, logger_1.debug)('server.http.endpoint/');
-            res.end(JSON.stringify({ msg: 'UniTool Proxy OK!' }));
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            const html = (0, webui_1.renderDashboard)(this._serverPort, Math.floor(process.uptime()), pkg.version || '1.0.0');
+            res.end(html);
+            return;
+        }
+        // Everything else → JSON
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        if (url === '/api/status' || url === '/health') {
+            res.end(JSON.stringify({
+                status: 'ok',
+                service: 'unitool-proxy',
+                version: pkg.version || '1.0.0',
+                uptime: Math.floor(process.uptime()),
+                port: this._serverPort,
+                timestamp: new Date().toISOString()
+            }));
         }
         else if (url === '/refresh') {
-            this._adapter.forceRefresh();
+            if (this._adapter)
+                this._adapter.forceRefresh();
             this.emit('forceRefresh');
-            res.end(JSON.stringify({ status: 'ok' }));
+            res.end(JSON.stringify({ status: 'ok', msg: 'Refresh triggered' }));
         }
         else if (url === '/json' || url === '/json/list') {
             (0, logger_1.debug)('server.http.endpoint' + url);
+            if (!this._adapter) {
+                res.end('[]');
+                return;
+            }
             this._adapter.getTargets().then((targets) => {
-                res.end(JSON.stringify(targets));
+                res.end(JSON.stringify(targets || []));
+            }).catch(() => {
+                res.end('[]');
             });
         }
         else if (url === '/json/version') {
@@ -130,7 +155,7 @@ class ProxyServer extends events_1.EventEmitter {
         }
         else {
             res.statusCode = 404;
-            res.end(JSON.stringify({ error: 'Not found' }));
+            res.end(JSON.stringify({ error: 'Not found', path: url }));
         }
     }
     onWSSConnection(ws, req) {
