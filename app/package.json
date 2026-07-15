@@ -1,0 +1,24 @@
+{
+  "name": "unitool-proxy",
+  "productName": "UniTool AI Proxy Server",
+  "version": "1.0.0",
+  "description": "Rebuilt iOS WebKit Debug Proxy Adapter - zero external dependencies",
+  "main": "out/index.js",
+  "bin": {
+    "unitool-proxy": "./out/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node out/index.js",
+    "dev": "tsc && node out/index.js",
+    "clean": "rm -rf out"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.4.5",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
