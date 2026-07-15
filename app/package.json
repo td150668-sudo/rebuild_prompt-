@@ -4,13 +4,9 @@
   "description": "UniTool Proxy Server",
   "main": "out/index.js",
   "scripts": {
-    "build": "tsc",
     "start": "node out/index.js"
   },
-  "dependencies": {
-    "typescript": "^5.1.6",
-    "@types/node": "^20.4.5"
-  },
+  "dependencies": {},
   "engines": {
     "node": ">=18.0.0"
   }

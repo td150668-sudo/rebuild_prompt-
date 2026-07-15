@@ -4,6 +4,6 @@ services:
     runtime: node
     plan: free
     rootDir: app
-    buildCommand: npm install && npm run build
+    buildCommand: echo "build done"
     startCommand: node out/index.js
     autoDeploy: true
