@@ -87,6 +87,9 @@ export class ProxyServer extends EventEmitter {
     if (url === '/') {
       debug('server.http.endpoint/');
       res.end(JSON.stringify({ msg: 'UniTool Proxy OK!' }));
+    } else if (url === '/health') {
+      // Ultra-lightweight health check for keep-alive pings
+      res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() | 0 }));
     } else if (url === '/refresh') {
       this._adapter.forceRefresh();
       this.emit('forceRefresh');

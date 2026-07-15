@@ -2,10 +2,17 @@ services:
   - type: web
     name: unitool-proxy
     runtime: node
+    plan: free
     rootDir: app
     buildCommand: npm install && npm run build
     startCommand: node out/index.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: unitool-proxy
+          property: host
     autoDeploy: true

@@ -35,6 +35,19 @@ server.run(port).then((actualPort: number) => {
   console.log(`UniTool Proxy is listening on port ${actualPort}`);
   console.log(`  Health check: http://localhost:${actualPort}/`);
   console.log(`  Targets:      http://localhost:${actualPort}/json`);
+
+  // === KEEP-ALIVE for Render Free Tier ===
+  // Render spins down free services after 15 min of inactivity.
+  // Self-ping every 14 minutes to stay awake (uses 0 extra resources).
+  const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+  if (RENDER_URL) {
+    const http = require('http');
+    const KEEP_ALIVE_INTERVAL = 14 * 60 * 1000; // 14 minutes
+    setInterval(() => {
+      http.get(`${RENDER_URL}/health`, () => {});
+    }, KEEP_ALIVE_INTERVAL);
+    console.log(`  Keep-alive: pinging ${RENDER_URL}/health every 14 min`);
+  }
 }).catch((err: any) => {
   console.error('UniTool Proxy failed to run:', err);
   process.exit(1);

@@ -62,8 +62,51 @@ src/
 
 ## Requirements
 
-- Node.js >= 14
+- Node.js >= 18
 - `ios_webkit_debug_proxy` installed (macOS/Linux) or bundled (Windows)
+
+## Deploy on Render.com (Free Tier)
+
+### One-Click Blueprint Deploy
+
+1. Fork/push this repo to your GitHub
+2. Go to [render.com/new](https://dashboard.render.com/) → **New** → **Blueprint**
+3. Connect your repo → Render reads `render.yaml` automatically
+4. Click **Apply** → Done!
+
+### Manual Web Service Setup
+
+| Setting | Value |
+|---------|-------|
+| **Runtime** | Node |
+| **Root Directory** | `app` |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `node out/index.js` |
+| **Instance Type** | Free |
+| **Health Check Path** | `/health` |
+
+### Keep-Alive (Prevent Sleep)
+
+Free services sleep after 15 min of inactivity. Two solutions:
+
+**Option A: Built-in self-ping (automatic)**
+Set env var `RENDER_EXTERNAL_URL=https://your-app.onrender.com`
+The app will ping itself every 14 minutes automatically.
+
+**Option B: External cron (recommended backup)**
+Use [cron-job.org](https://cron-job.org) (free):
+- URL: `https://your-app.onrender.com/health`
+- Schedule: Every 14 minutes
+
+### Free Tier Limits
+
+| Resource | Limit |
+|----------|-------|
+| Instance hours | 750/month (enough for 1 service 24/7) |
+| RAM | 512 MB |
+| Bandwidth | 100 GB/month |
+| Sleep after idle | 15 minutes |
+| Cold start | ~30-60 seconds |
 
 ## License
 
